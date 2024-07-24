@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="he">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>מחשבון עלות נסיעה</title>
+    <meta name="description" content="מחשבון עלות נסיעה שיתופית" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚗</text></svg>" />
+    <style>
+      *:focus,
+      *:focus-visible {
+        outline-color: #615191e8;
+      }
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: #f0f4f8;
+        color: #333;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        flex-direction: column;
+        text-align: right;
+        direction: rtl;
+        background-image: linear-gradient(to top, #facbed 0%, #a6c1ee 100%);
+      }
+      h1,
+      h2 {
+        text-align: center;
+      }
+      #trip-form {
+        background: #fff9;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 23px;
+      }
+      .form-group {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+      label {
+        font-weight: bold;
+      }
+      input,
+      select {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-sizing: border-box;
+      }
+      input[type="text"],
+      input[type="number"],
+      select {
+        width: 100%;
+      }
+      input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+      }
+      button {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        background: #7862bbe8;
+        color: white;
+        font-size: 16px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #0056b39e;
+      }
+      p {
+        text-align: center;
+        font-weight: bold;
+      }
+      .error {
+        color: red;
+        text-align: center;
+        font-weight: bold;
+      }
+      #bsd {
+        font-size: 14px;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+      }
+      footer {
+        font-size: 14px;
+        position: absolute;
+        bottom: 15px;
+        left: 15px;
+      }
+      /* Spinner animation */
+      .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 2s linear infinite;
+        margin: 0 auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      @media only screen and (max-width: 550px) {
+        #trip-form {
+          max-width: 85%;
+          margin: 0 auto;
+        }
+        footer {
+          position: relative;
+          bottom: 0;
+          left: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <span id="bsd">בס"ד</span>
+      <h1>מחשבון עלות נסיעה</h1>
+
+      <form id="trip-form">
+        <div>
+          <label for="origin">מוצא:</label>
+          <input type="text" id="origin" name="origin" value="ירושלים, רמות" required />
+        </div>
+
+        <div>
+          <label for="destination">יעד:</label>
+          <input type="text" id="destination" name="destination" required />
+        </div>
+
+        <div class="form-group">
+          <div>
+            <label for="fuel-consumption">צריכת דלק ממוצעת:</label>
+            <input type="number" id="fuel-consumption" name="fuel-consumption" value="10" min="1" required />
+          </div>
+          <div>
+            <label for="fuel-price">מחיר דלק (₪/ליטר):</label>
+            <input type="number" id="fuel-price" name="fuel-price" value="7.80" min="0.01" step="0.01" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div>
+            <label for="passengers">מספר נוסעות:</label>
+            <input type="number" id="passengers" name="passengers" value="2" min="1" required />
+          </div>
+          <div>
+            <label for="toll-road">כביש אגרה:</label>
+            <select id="toll-road" name="toll-road">
+              <option value="0">לא נוסעת בכביש 6</option>
+              <option value="20">איזור המרכז-מודיעין</option>
+              <option value="29">איזור נתניה-קיסריה</option>
+              <option value="37">איזור הצפון-כנרת</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 5px">
+          <input type="checkbox" id="round-trip" name="round-trip" checked />
+          <label for="round-trip">חישוב גם לחזור</label>
+        </div>
+
+        <button type="button" id="calculate-btn" onclick="calculateTripCost()">נו כמה יצא?</button>
+        <div id="spinner" class="spinner" style="display: none"></div>
+      </form>
+
+      <p id="trip-distance"></p>
+      <p id="trip-cost"></p>
+      <p class="error" id="error-message"></p>
+    </div>
+    <footer>מחשבון זה נבנה באהבה עבור אחותי היקרה, נורית שמש ❤️</footer>
+
+    <script>
+      async function calculateTripCost() {
+        const calculateBtn = document.getElementById("calculate-btn");
+        const spinner = document.getElementById("spinner");
+        calculateBtn.style.display = "none";
+        spinner.style.display = "block";
+        const origin = document.getElementById("origin").value;
+        const destination = document.getElementById("destination").value;
+        const fuelConsumption = parseFloat(document.getElementById("fuel-consumption").value);
+        const passengers = parseInt(document.getElementById("passengers").value);
+        const fuelPrice = parseFloat(document.getElementById("fuel-price").value);
+        const roundTrip = document.getElementById("round-trip").checked;
+        const tollRoad = parseFloat(document.getElementById("toll-road").value);
+
+        try {
+          const [originCoords, destinationCoords] = await Promise.all([getCoordinates(origin), getCoordinates(destination)]);
+          const distance = await getDistance(`${originCoords.lon},${originCoords.lat}`, `${destinationCoords.lon},${destinationCoords.lat}`);
+          let tripCost = ((distance / fuelConsumption) * fuelPrice + tollRoad) / passengers;
+          if (roundTrip) {
+            tripCost *= 2;
+          }
+
+          const distanceText = roundTrip ? "המרחק בהלוך חזור" : "המרחק בין";
+          document.getElementById("trip-distance").textContent = `${distanceText} ${origin} ל${destination} הוא ${(roundTrip ? distance * 2 : distance).toFixed(0)} ק"מ.`;
+          document.getElementById("trip-cost").textContent = `עלות הנסיעה עבור ${passengers} נוסעות היא ${tripCost.toFixed(0)} ₪ לכל נוסעת.`;
+          document.getElementById("error-message").textContent = "";
+        } catch (error) {
+          document.getElementById("error-message").textContent = error.message;
+        }
+        calculateBtn.style.display = "block";
+        spinner.style.display = "none";
+      }
+
+      async function getCoordinates(address) {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&accept-language=he`);
+        const data = await response.json();
+        if (data.length > 0) {
+          return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+        } else {
+          throw new Error(`לא נמצאו קואורדינטות לכתובת: ${address}`);
+        }
+      }
+
+      async function getDistance(origin, destination) {
+        const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${origin};${destination}?overview=false`);
+        const data = await response.json();
+        if (data.routes && data.routes.length > 0) {
+          return data.routes[0].distance / 1000; // Distance in kilometers
+        } else {
+          throw new Error("לא ניתן לחשב את המרחק בין המיקומים הנבחרים.");
+        }
+      }
+    </script>
+  </body>
+</html>
